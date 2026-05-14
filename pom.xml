@@ -18,7 +18,7 @@
     <description>Autonomous cargo re-routing microservice — agentic weather-aware loop</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>25</java.version>
     </properties>
 
     <dependencies>
