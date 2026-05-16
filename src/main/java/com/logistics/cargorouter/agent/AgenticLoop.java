@@ -14,26 +14,11 @@ import com.logistics.cargorouter.foundation.RouteCandidate;
 import com.logistics.cargorouter.repository.ShipmentRepository;
 
 /**
- * The agentic loop — the autonomous heart of the service.
- *
- * Runs on a fixed schedule and executes five deterministic steps each cycle:
- *
- *   ① Monitor  — load all ACTIVE shipments from the database
- *   ② Assess   — score the current route's weather risk (RiskAssessor)
- *   ③ Predict  — rank alternative routes via min-heap (RouteRanker)
- *   ④ Act      — publish RerouteCommand + persist audit if improvement > threshold
- *   ⑤ Repeat   — sleep until next scheduled tick
- *
- * Design principles from JPMC Midas:
- *   - Each step is a single-concern collaborator bean (same as JPMC's
- *     IncentiveService / UserRepository separation of concerns).
- *   - Every action that changes state is persisted (TransactionRecord pattern
- *     → RouteDecision pattern).
- *
- * Design principles from Walmart task 4:
- *   - Data is aggregated in one place (ShipmentAggregator) before being
- *     handed to the decision layer (RouteRanker).
- *   - The heap in RouteRanker keeps ranking O(k log k) instead of O(k²).
+ * Scheduled agentic loop that evaluates every active shipment each cycle:
+ *   ① Monitor  — load ACTIVE/REROUTED shipments
+ *   ② Assess   — score current route weather risk
+ *   ③ Predict  — rank alternatives via min-heap
+ *   ④ Act      — publish reroute command + persist audit if improvement > threshold
  */
 @Component
 public class AgenticLoop {
@@ -58,13 +43,7 @@ public class AgenticLoop {
         this.rerouteDecider     = rerouteDecider;
     }
 
-    /**
-     * One full agent cycle. Runs every {@code general.agent-interval-ms} milliseconds
-     * (default 60 000 ms = 1 minute).
-     *
-     * fixedDelayString means the next cycle starts only after the current one
-     * completes — this prevents overlapping cycles if a cycle takes > 1 minute.
-     */
+    /** Runs every {@code general.agent-interval-ms} ms (default 60 s). Fixed delay prevents overlapping cycles. */
     @Scheduled(fixedDelayString = "${general.agent-interval-ms:60000}")
     public void cycle() {
         // ① Monitor

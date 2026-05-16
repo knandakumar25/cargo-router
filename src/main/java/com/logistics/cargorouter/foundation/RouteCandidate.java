@@ -1,17 +1,8 @@
 package com.logistics.cargorouter.foundation;
 
 /**
- * A candidate route considered during re-routing evaluation.
- *
- * Implements Comparable so it can be used directly in a java.util.PriorityQueue
- * (min-heap by compositeScore). This is the core of the heap-optimised route
- * selection algorithm adapted from Walmart's shipping aggregation task:
- *
- *   Walmart:  defaultdict + linear scan over shipment groups → O(k²)
- *   Here:     PriorityQueue<RouteCandidate>                  → O(k log k)
- *
- * compositeScore = (weatherRisk * 0.70) + (normalizedDelay * 0.30)
- * Polling heap.poll() always returns the globally cheapest route in O(log k).
+ * A candidate route scored for heap ranking.
+ * compositeScore = (weatherRisk * 0.70) + (normalizedDelay * 0.30); lower is better.
  */
 public class RouteCandidate implements Comparable<RouteCandidate> {
 

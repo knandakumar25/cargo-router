@@ -47,15 +47,12 @@ public class RerouteDecider {
     }
 
     /**
-     * Evaluate whether to commit the reroute and, if so, take all three actions:
-     *  1. Publish RerouteCommand to Kafka (fleet systems consume this)
-     *  2. Update ShipmentRecord.currentRoute in the database
-     *  3. Persist RouteDecision audit record
+     * Commits a reroute: publishes to Kafka, updates the DB record, writes an audit entry.
      *
-     * @param shipment       the active shipment under review
-     * @param best           the best alternative from RouteRanker's heap
-     * @param currentRisk    the current route's assessed risk score
-     * @param trigger        human-readable trigger label from RiskAssessor
+     * @param shipment    the active shipment under review
+     * @param best        the best alternative from RouteRanker's heap
+     * @param currentRisk the current route's assessed risk score
+     * @param trigger     human-readable trigger label from RiskAssessor
      */
     public void act(ShipmentRecord shipment, RouteCandidate best,
                     double currentRisk, String trigger) {

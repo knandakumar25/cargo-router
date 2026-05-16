@@ -13,29 +13,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.logistics.cargorouter.foundation.WeatherReport;
 
 /**
- * Fetches live weather conditions for a named waypoint city.
- *
- * Mirrors JPMC's IncentiveService: a single RestTemplate.postForObject/getForObject
- * call that queries an external HTTP endpoint and maps the response to a domain DTO.
- *
- * API: Open-Meteo (https://open-meteo.com) — free, no API key required.
- * Endpoint: GET /v1/forecast?latitude={lat}&longitude={lon}&current_weather=true
- *
- * WMO weather code → risk score mapping:
- *   0–3   (clear / mainly clear)      → 0.05
- *   45–48 (fog)                       → 0.30
- *   51–67 (drizzle / rain)            → 0.45
- *   71–77 (snow)                      → 0.70
- *   80–82 (showers)                   → 0.50
- *   85–86 (snow showers)              → 0.75
- *   95–99 (thunderstorm / hail)       → 0.90
+ * Fetches live weather for a waypoint city via Open-Meteo (no API key required).
+ * WMO weather code → risk: clear=0.05, fog=0.30, rain=0.45, snow=0.70,
+ *   showers=0.50, snow showers=0.75, thunderstorm=0.90. Wind adds up to +0.15.
  */
 @Component
 public class WeatherMonitor {
 
     private static final Logger log = LoggerFactory.getLogger(WeatherMonitor.class);
 
-    /** Lat/lon catalog for the freight corridor cities in ShipmentAggregator. */
+    /** Lat/lon for each freight hub city. */
     private static final Map<String, double[]> CITY_COORDS = Map.ofEntries(
             Map.entry("Chicago",         new double[]{41.8781, -87.6298}),
             Map.entry("Indianapolis",    new double[]{39.7684, -86.1581}),

@@ -9,15 +9,7 @@ import com.logistics.cargorouter.entity.ShipmentRecord;
 import com.logistics.cargorouter.foundation.CargoShipment;
 import com.logistics.cargorouter.repository.ShipmentRepository;
 
-/**
- * Kafka consumer for inbound cargo events.
- *
- * Structurally identical to JPMC's TransactionListener:
- *   @KafkaListener → validate → enrich (build initial route) → persist
- *
- * The initial route is constructed by ShipmentAggregator, which replicates
- * Walmart's multi-source join pattern (products + metadata → complete record).
- */
+/** Kafka consumer: validates inbound cargo events, builds the initial route, and persists the shipment. */
 @Component
 public class ShipmentListener {
 
@@ -32,13 +24,7 @@ public class ShipmentListener {
         this.shipmentAggregator = shipmentAggregator;
     }
 
-    /**
-     * Consume a cargo shipment event from the inbound Kafka topic.
-     *
-     * Guards:
-     *  - Duplicate shipmentId → skip (idempotent; Kafka at-least-once delivery)
-     *  - Missing origin or destination → skip
-     */
+    /** Drops duplicates and messages with missing ID, origin, or destination. */
     @KafkaListener(topics = "${general.kafka-inbound-topic}")
     public void listen(CargoShipment shipment) {
         log.info("Received shipment event: {}", shipment);
@@ -60,7 +46,6 @@ public class ShipmentListener {
             return;
         }
 
-        // Build the initial route from origin → destination using the waypoint catalog
         String initialRoute = shipmentAggregator.buildInitialRoute(
                 shipment.getOriginWarehouse(), shipment.getDestinationStore());
 

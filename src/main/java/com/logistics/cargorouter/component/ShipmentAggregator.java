@@ -8,46 +8,17 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 /**
- * Aggregates route segment data into full multi-hop routes.
- *
- * ─── Walmart pattern mapping ────────────────────────────────────────────────
- * Walmart task 4 grouped product lines by shipment_identifier using a nested
- * defaultdict, then joined the result with a separate origins dict:
- *
- *   shipmentProducts = defaultdict(lambda: defaultdict(int))
- *   shipmentProducts[shipment_id][product] += 1          # group by ID
- *   origin, dest = origins[shipment_id]                  # join metadata
- *
- * Here the same two-phase pattern is used to aggregate route segments:
- *
- *   Phase 1 — group:  segmentIndex[origin] → List<String> downstream hops
- *   Phase 2 — join:   walk graph from origin to destination, expanding hops
- *
- * Result: a comma-separated waypoint string ready to store in ShipmentRecord.
- * ────────────────────────────────────────────────────────────────────────────
- *
- * The WAYPOINT_CATALOG maps city codes used in warehouse/store IDs to the
- * canonical city names recognised by WeatherMonitor. In production this would
- * be backed by a geographic service or a config server.
+ * Builds multi-hop routes from a static freight-corridor graph (SEGMENT_INDEX)
+ * and resolves warehouse/store UUID prefixes to city names (WAYPOINT_CATALOG).
  */
 @Component
 public class ShipmentAggregator {
 
-    /**
-     * Phase 1 — segment index: origin city → list of next-hop cities.
-     * Pre-loaded with the US freight corridor graph.
-     * Mirrors Walmart's `shipmentProducts = defaultdict(lambda: defaultdict(int))`.
-     */
-    private static final Map<String, List<String>> SEGMENT_INDEX = new HashMap<>();
-
-    /**
-     * Phase 2 — metadata join: warehouse/store ID prefix → canonical city name.
-     * Mirrors Walmart's `origins = {}` dict.
-     */
-    private static final Map<String, String> WAYPOINT_CATALOG = new HashMap<>();
+    private static final Map<String, List<String>> SEGMENT_INDEX  = new HashMap<>();
+    private static final Map<String, String>        WAYPOINT_CATALOG = new HashMap<>();
 
     static {
-        // Segment graph (directional edges of common freight corridors)
+        // Freight corridor graph
         putSegment("Chicago",       List.of("Indianapolis", "Milwaukee", "St. Louis"));
         putSegment("Indianapolis",  List.of("Louisville", "Columbus", "Cincinnati"));
         putSegment("Louisville",    List.of("Nashville", "Lexington", "Cincinnati"));
@@ -70,7 +41,7 @@ public class ShipmentAggregator {
         putSegment("St. Louis",     List.of("Kansas City", "Memphis", "Chicago"));
         putSegment("Kansas City",   List.of("St. Louis", "Omaha", "Wichita"));
 
-        // Warehouse/store location prefixes → city (mirrors Walmart's origins join)
+        // Warehouse/store UUID prefixes → city
         WAYPOINT_CATALOG.put("d5566b", "Chicago");
         WAYPOINT_CATALOG.put("c42f0d", "Dallas");
         WAYPOINT_CATALOG.put("b145f3", "Atlanta");
@@ -86,12 +57,7 @@ public class ShipmentAggregator {
         SEGMENT_INDEX.put(from, new ArrayList<>(to));
     }
 
-    /**
-     * Build the initial route for a new shipment as a comma-separated waypoint string.
-     *
-     * Phase 1 — resolve origin/destination IDs to city names (Walmart join step).
-     * Phase 2 — walk segment graph from origin to destination (Walmart group step).
-     */
+    /** Resolves origin/destination IDs to cities, then DFS-walks the segment graph. */
     public String buildInitialRoute(String originId, String destinationId) {
         String origin      = resolveCity(originId);
         String destination = resolveCity(destinationId);
@@ -104,12 +70,7 @@ public class ShipmentAggregator {
         return String.join(",", path);
     }
 
-    /**
-     * Generate alternative routes for a given origin→destination pair.
-     * Each alternative uses a different first hop from the segment graph.
-     *
-     * This produces the candidate list fed into RouteRanker's PriorityQueue.
-     */
+    /** Returns alternative routes, each using a different first hop from the origin. */
     public List<String[]> buildAlternatives(String currentRoute) {
         String[] waypoints = currentRoute.split(",");
         if (waypoints.length < 2) {
@@ -141,10 +102,7 @@ public class ShipmentAggregator {
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
-    /**
-     * DFS path search through SEGMENT_INDEX with depth cap.
-     * Returns the full path from 'current' to 'destination', or empty list if not found.
-     */
+    /** DFS through SEGMENT_INDEX; returns full path or empty list if unreachable within depth. */
     private List<String> findPath(String current, String destination,
                                    List<String> visited, int depthRemaining) {
         if (current.equals(destination)) {
@@ -169,10 +127,7 @@ public class ShipmentAggregator {
         return List.of();
     }
 
-    /**
-     * Resolve a warehouse/store UUID prefix to a city name.
-     * Mirrors Walmart's `origins[shipment_identifier]` lookup.
-     */
+    /** Resolves a warehouse/store UUID prefix to a canonical city name. */
     String resolveCity(String locationId) {
         if (locationId == null || locationId.length() < 6) {
             return "Chicago"; // safe default
