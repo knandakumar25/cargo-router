@@ -1,5 +1,7 @@
 package com.logistics.cargorouter.agent;
 
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,6 +67,7 @@ public class RerouteDecider {
             return;
         }
 
+        String shipmentId    = Objects.requireNonNull(shipment.getShipmentId());
         String previousRoute = shipment.getCurrentRoute();
         String newRoute      = best.waypointsAsString().replace(" → ", ",");
 
@@ -80,7 +83,7 @@ public class RerouteDecider {
                 best.getWeatherRisk(),
                 trigger
         );
-        kafkaTemplate.send(rerouteTopic, shipment.getShipmentId(), command);
+        kafkaTemplate.send(rerouteTopic, shipmentId, command);
 
         // 2. Update ShipmentRecord (currentRoute + status)
         shipment.setCurrentRoute(newRoute);

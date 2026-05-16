@@ -1,28 +1,11 @@
 server:
   port: 28500
 
-general:
-  # ── Kafka topics ──────────────────────────────────────────────────────────
-  # Mirrors JPMC's general.kafka-topic pattern; split into inbound/outbound.
-  kafka-inbound-topic:  cargo-updates     # consumed by ShipmentListener
-  kafka-outbound-topic: reroute-commands  # produced by RerouteDecider
-
-  # ── Weather API ───────────────────────────────────────────────────────────
-  # Open-Meteo: free, no API key required.
-  # Swap to https://api.openweathermap.org/data/2.5/weather?appid=KEY for OWM.
-  weather-api-url: https://api.open-meteo.com/v1/forecast
-
-  # ── Agentic loop ──────────────────────────────────────────────────────────
-  agent-interval-ms: 60000   # How often the loop runs (milliseconds)
-
-  # Risk score [0.0–1.0] above which a shipment triggers alternative search
-  risk-threshold: 0.65
-
-  # Minimum improvement in risk score before a reroute is committed.
-  # Prevents churn when the alternative is only marginally better.
-  min-improvement-threshold: 0.10
-
 spring:
+  threads:
+    virtual:
+      enabled: true
+
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -30,6 +13,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.logistics.cargorouter.foundation.CargoShipment
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
@@ -48,3 +32,11 @@ spring:
     console:
       enabled: true
       path: /h2-console
+
+general:
+  kafka-inbound-topic: cargo-updates
+  kafka-outbound-topic: reroute-commands
+  weather-api-url: https://api.open-meteo.com/v1/forecast
+  agent-interval-ms: 60000
+  risk-threshold: 0.65
+  min-improvement-threshold: 0.10

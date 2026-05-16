@@ -47,15 +47,16 @@ public class ShipmentListener {
             log.warn("Dropping shipment with null/empty ID");
             return;
         }
+        String shipmentId = shipment.getShipmentId(); // non-null beyond this point
 
         if (shipment.getOriginWarehouse() == null || shipment.getDestinationStore() == null) {
-            log.warn("Dropping shipment {} — missing origin or destination", shipment.getShipmentId());
+            log.warn("Dropping shipment {} — missing origin or destination", shipmentId);
             return;
         }
 
         // Idempotency: skip if already persisted
-        if (shipmentRepository.existsById(shipment.getShipmentId())) {
-            log.debug("Shipment {} already exists — skipping duplicate event", shipment.getShipmentId());
+        if (shipmentRepository.existsById(shipmentId)) {
+            log.debug("Shipment {} already exists — skipping duplicate event", shipmentId);
             return;
         }
 
