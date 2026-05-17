@@ -301,6 +301,16 @@ $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --top
 
 From the root of your `cargo-router` project directory, boot the Spring container:
 
+> **Windows tip:** `JAVA_HOME` must be set for the Maven wrapper to locate the JDK. To set it permanently, run once:
+> ```powershell
+> [System.Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Java\jdk-25.0.3", "User")
+> ```
+> To apply it in the current session without restarting your terminal:
+> ```powershell
+> $env:JAVA_HOME = "C:\Program Files\Java\jdk-25.0.3"
+> $env:PATH = "$env:JAVA_HOME\bin;" + $env:PATH
+> ```
+
 **On macOS / Linux**
 
 ```bash
