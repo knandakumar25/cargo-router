@@ -346,6 +346,21 @@ Once the interactive input prompt (`>`) opens, paste this JSON string and press 
 
 ### Step 6 — Query Results
 
+**On macOS / Linux**
+
+```bash
+# Current route and shipment status
+curl http://localhost:28500/shipment/SHP-2026-00001/route
+
+# Full reroute decision audit log (newest first)
+curl http://localhost:28500/shipment/SHP-2026-00001/decisions
+
+# All shipments currently under agent monitoring
+curl http://localhost:28500/shipments/active
+```
+
+**On Windows (PowerShell)**
+
 ```powershell
 # Current route and shipment status
 Invoke-RestMethod http://localhost:28500/shipment/SHP-2026-00001/route
