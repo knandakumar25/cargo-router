@@ -26,3 +26,5 @@ target/
 *.swo
 .DS_Store
 Thumbs.db
+
+.fake
