@@ -11,7 +11,7 @@
 
 When a route's assessed risk score crosses a configurable threshold (`general.risk-threshold: 0.65`), the loop generates a ranked set of alternative paths using a `PriorityQueue`-based min-heap, selects the globally optimal route via a weighted composite score function, and publishes a `RerouteCommand` back to Kafka — all within a single, self-contained 60-second decision cycle. Every committed reroute is written to an immutable `RouteDecision` audit record in H2, creating a complete, queryable history of every autonomous action taken by the system.
 
-The architecture mirrors enterprise patterns drawn from JPMorgan Chase's Midas platform and Walmart's logistics pipeline: the same JPA/H2 persistence model, the same Kafka `JsonDeserializer` serialization strategy, and the same `RestTemplate` HTTP client pattern for external service integration.
+The architecture mirrors enterprise-grade, event-driven patterns commonly deployed in high-throughput retail logistics pipelines and financial transaction processing systems. It leverages a robust, asynchronous decoupled messaging model utilizing a Kafka `JsonDeserializer` serialization strategy, structured JPA/H2 persistence for transactional consistency, and an isolated `RestTemplate` HTTP client pattern for reliable external service integration.
 
 ---
 
