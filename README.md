@@ -207,18 +207,38 @@ Run the full suite:
 
 ### Prerequisites
 
-- JDK 25 (project uses `--enable-preview` virtual threads)
+- JDK 25 (project uses virtual threads)
 - Apache Kafka 4.2 binary distribution — [kafka.apache.org/downloads](https://kafka.apache.org/downloads)
 - Maven (or use the included `mvnw` wrapper)
-
-> All commands below are native Windows PowerShell. Set `$KAFKA_HOME` to your Kafka installation root.
 
 ---
 
 ### Step 1 — Initialize Kafka KRaft Storage
 
+Before launching the broker, you must generate a cluster ID and format your local storage directory using the standalone KRaft tool.
+
+**On macOS / Linux**
+
+```bash
+# Set your Kafka installation directory (adjust to your local path)
+export KAFKA_HOME="/usr/local/kafka"
+
+# Generate a fresh cluster UUID
+CLUSTER_ID=$($KAFKA_HOME/bin/kafka-storage.sh random-uuid)
+echo "Cluster ID: $CLUSTER_ID"
+
+# Format the log directory in standalone KRaft mode
+$KAFKA_HOME/bin/kafka-storage.sh format \
+    --standalone \
+    --config "$KAFKA_HOME/config/kraft/server.properties" \
+    --cluster-id "$CLUSTER_ID"
+```
+
+**On Windows (PowerShell)**
+
 ```powershell
-$KAFKA_HOME = "C:\kafka"   # ← adjust to your Kafka installation path
+# Set your Kafka installation directory (adjust to your local path)
+$KAFKA_HOME = "C:\kafka"
 
 # Generate a fresh cluster UUID
 $CLUSTER_ID = & "$KAFKA_HOME\bin\windows\kafka-storage.bat" random-uuid
@@ -227,57 +247,87 @@ Write-Host "Cluster ID: $CLUSTER_ID"
 # Format the log directory in standalone KRaft mode
 & "$KAFKA_HOME\bin\windows\kafka-storage.bat" format `
     --standalone `
-    --config "$KAFKA_HOME\config\kraft\reconfig-server.properties" `
+    --config "$KAFKA_HOME\config\kraft\server.properties" `
     --cluster-id $CLUSTER_ID
 ```
 
+---
+
 ### Step 2 — Start the Kafka Broker
 
-```powershell
-& "$KAFKA_HOME\bin\windows\kafka-server-start.bat" `
-    "$KAFKA_HOME\config\kraft\reconfig-server.properties"
+Launch the unified KRaft broker cluster. Leave this terminal window active to handle the real-time event pipeline.
+
+**On macOS / Linux**
+
+```bash
+$KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/kraft/server.properties
 ```
 
-The broker binds to `localhost:9092`. Leave this terminal open.
+**On Windows (PowerShell)**
+
+```powershell
+& "$KAFKA_HOME\bin\windows\kafka-server-start.bat" "$KAFKA_HOME\config\kraft\server.properties"
+```
+
+---
 
 ### Step 3 — Create the Required Topics
 
-In a new terminal:
+Open a second terminal window to provision the data channels before booting the application.
+
+**On macOS / Linux**
+
+```bash
+$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic cargo-updates --partitions 1 --replication-factor 1
+$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic reroute-commands --partitions 1 --replication-factor 1
+```
+
+**On Windows (PowerShell)**
 
 ```powershell
-& "$KAFKA_HOME\bin\windows\kafka-topics.bat" `
-    --bootstrap-server localhost:9092 `
-    --create --topic cargo-updates --partitions 1 --replication-factor 1
-
-& "$KAFKA_HOME\bin\windows\kafka-topics.bat" `
-    --bootstrap-server localhost:9092 `
-    --create --topic reroute-commands --partitions 1 --replication-factor 1
+& "$KAFKA_HOME\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic cargo-updates --partitions 1 --replication-factor 1
+& "$KAFKA_HOME\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic reroute-commands --partitions 1 --replication-factor 1
 ```
+
+---
 
 ### Step 4 — Build and Start the Application
 
+From the root of your `cargo-router` project directory, boot the Spring container:
+
+**On macOS / Linux**
+
+```bash
+./mvnw spring-boot:run
+```
+
+**On Windows (PowerShell)**
+
 ```powershell
-# From the cargo-router project root
 .\mvnw spring-boot:run
 ```
 
-The application starts on port **28500**. Confirm liveness:
+The microservice will boot on port **28500**. Verify baseline liveness by curling the active shipments endpoint: `http://localhost:28500/shipments/active`
 
-```powershell
-Invoke-RestMethod -Uri http://localhost:28500/shipments/active
-```
+---
 
 ### Step 5 — Publish a Test Cargo Shipment
 
-Start a Kafka console producer targeting the inbound topic:
+Open an interactive console producer to feed a simulated logistics event into your live ingestion topology.
 
-```powershell
-& "$KAFKA_HOME\bin\windows\kafka-console-producer.bat" `
-    --bootstrap-server localhost:9092 `
-    --topic cargo-updates
+**On macOS / Linux**
+
+```bash
+$KAFKA_HOME/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic cargo-updates
 ```
 
-Paste the following payload and press **Enter**:
+**On Windows (PowerShell)**
+
+```powershell
+& "$KAFKA_HOME\bin\windows\kafka-console-producer.bat" --bootstrap-server localhost:9092 --topic cargo-updates
+```
+
+Once the interactive input prompt (`>`) opens, paste this JSON string and press **Enter**:
 
 ```json
 {
@@ -291,6 +341,8 @@ Paste the following payload and press **Enter**:
 ```
 
 `ShipmentListener` resolves `originWarehouse` → **Chicago** and `destinationStore` → **Nashville** via the `WAYPOINT_CATALOG` UUID prefix lookup, constructs the initial DFS multi-hop route (e.g. `Chicago,Indianapolis,Louisville,Nashville`), and persists a `ShipmentRecord` with status `ACTIVE`. Within the next agent cycle (≤ 60 seconds), `AgenticLoop` will evaluate every waypoint against live Open-Meteo weather data and autonomously reroute if the assessed risk exceeds `0.65`.
+
+---
 
 ### Step 6 — Query Results
 
