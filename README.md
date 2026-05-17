@@ -272,12 +272,18 @@ Launch the unified KRaft broker cluster. Leave this terminal window active to ha
 **On macOS / Linux**
 
 ```bash
+# Re-export KAFKA_HOME if this is a new terminal window
+export KAFKA_HOME="${KAFKA_HOME:-/usr/local/kafka}"
+
 $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
 ```
 
 **On Windows (PowerShell)**
 
 ```powershell
+# Reload KAFKA_HOME in this terminal window if it was not carried over from Step 1
+$env:KAFKA_HOME = [System.Environment]::GetEnvironmentVariable("KAFKA_HOME", "User")
+
 & "$env:KAFKA_HOME\bin\windows\kafka-server-start.bat" "$env:KAFKA_HOME\config\server.properties"
 ```
 
