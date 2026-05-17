@@ -230,7 +230,7 @@ echo "Cluster ID: $CLUSTER_ID"
 # Format the log directory in standalone KRaft mode
 $KAFKA_HOME/bin/kafka-storage.sh format \
     --standalone \
-    --config "$KAFKA_HOME/config/kraft/server.properties" \
+    --config "$KAFKA_HOME/config/server.properties" \
     --cluster-id "$CLUSTER_ID"
 ```
 
@@ -247,7 +247,7 @@ Write-Host "Cluster ID: $CLUSTER_ID"
 # Format the log directory in standalone KRaft mode
 & "$KAFKA_HOME\bin\windows\kafka-storage.bat" format `
     --standalone `
-    --config "$KAFKA_HOME\config\kraft\server.properties" `
+    --config "$KAFKA_HOME\config\server.properties" `
     --cluster-id $CLUSTER_ID
 ```
 
@@ -260,13 +260,13 @@ Launch the unified KRaft broker cluster. Leave this terminal window active to ha
 **On macOS / Linux**
 
 ```bash
-$KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/kraft/server.properties
+$KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
 ```
 
 **On Windows (PowerShell)**
 
 ```powershell
-& "$KAFKA_HOME\bin\windows\kafka-server-start.bat" "$KAFKA_HOME\config\kraft\server.properties"
+& "$KAFKA_HOME\bin\windows\kafka-server-start.bat" "$KAFKA_HOME\config\server.properties"
 ```
 
 ---
