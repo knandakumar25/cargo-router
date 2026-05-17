@@ -217,6 +217,12 @@ Run the full suite:
 
 Before launching the broker, you must generate a cluster ID and format your local storage directory using the standalone KRaft tool.
 
+> **Windows tip:** `$KAFKA_HOME` must be set in every new PowerShell session since variables do not persist across terminals. To set it permanently as a user environment variable, run once:
+> ```powershell
+> [System.Environment]::SetEnvironmentVariable("KAFKA_HOME", "C:\kafka\kafka_2.13-4.2.0", "User")
+> ```
+> Then restart your terminal — `$env:KAFKA_HOME` will be available automatically in all future sessions.
+
 **On macOS / Linux**
 
 ```bash
