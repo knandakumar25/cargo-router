@@ -341,7 +341,15 @@ From the root of your `cargo-router` project directory, boot the Spring containe
 .\mvnw spring-boot:run
 ```
 
-The microservice will boot on port **28500**. Verify baseline liveness by curling the active shipments endpoint: `http://localhost:28500/shipment/active`
+The microservice will boot on port **28500**. Watch the log output for these three lines that confirm a healthy startup:
+
+```
+Started CargoRouterApplication in X.XXX seconds (process running for X.XXX)
+Successfully joined group with generation Generation{generationId=1, ...}
+partitions assigned: [cargo-updates-0]
+```
+
+The first line confirms the Spring context is up. The second and third confirm the Kafka consumer has joined its group and is actively polling `cargo-updates` for inbound shipment events. If either of the Kafka lines is missing, the broker is not reachable — verify Step 2 is still running.
 
 ---
 
