@@ -229,6 +229,9 @@ Before launching the broker, you must generate a cluster ID and format your loca
 # Set your Kafka installation directory (adjust to your local path)
 export KAFKA_HOME="/usr/local/kafka"
 
+# Clear any stale log directory from a previous cluster (format will fail if meta.properties exists)
+rm -rf /tmp/kraft-combined-logs
+
 # Generate a fresh cluster UUID
 CLUSTER_ID=$($KAFKA_HOME/bin/kafka-storage.sh random-uuid)
 echo "Cluster ID: $CLUSTER_ID"
@@ -245,6 +248,9 @@ $KAFKA_HOME/bin/kafka-storage.sh format \
 ```powershell
 # Set for this session — skip if KAFKA_HOME is already a permanent user environment variable (see tip above)
 $env:KAFKA_HOME = "C:\kafka\kafka_2.13-4.2.0"
+
+# Clear any stale log directory from a previous cluster (format will fail if meta.properties exists)
+Remove-Item -Recurse -Force C:\tmp\kraft-combined-logs -ErrorAction SilentlyContinue
 
 # Generate a fresh cluster UUID — pipe through Select-Object -Last 1 to strip any Java startup warnings
 $CLUSTER_ID = ((& "$env:KAFKA_HOME\bin\windows\kafka-storage.bat" random-uuid 2>&1) | Select-Object -Last 1).Trim()
