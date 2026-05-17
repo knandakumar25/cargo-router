@@ -129,7 +129,14 @@ public class ShipmentAggregator {
 
     /** Resolves a warehouse/store UUID prefix to a canonical city name. */
     String resolveCity(String locationId) {
-        if (locationId == null || locationId.length() < 6) {
+        if (locationId == null || locationId.isBlank()) {
+            return "Chicago"; // safe default
+        }
+        // Already a valid graph node — pass through unchanged
+        if (SEGMENT_INDEX.containsKey(locationId)) {
+            return locationId;
+        }
+        if (locationId.length() < 6) {
             return "Chicago"; // safe default
         }
         String prefix = locationId.substring(0, 6).toLowerCase();
