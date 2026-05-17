@@ -238,7 +238,7 @@ $KAFKA_HOME/bin/kafka-storage.sh format \
 
 ```powershell
 # Set your Kafka installation directory (adjust to your local path)
-$KAFKA_HOME = "C:\kafka"
+$KAFKA_HOME = "C:\kafka\kafka_2.13-4.2.0"
 
 # Generate a fresh cluster UUID
 $CLUSTER_ID = & "$KAFKA_HOME\bin\windows\kafka-storage.bat" random-uuid
