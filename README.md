@@ -372,7 +372,7 @@ curl http://localhost:28500/shipment/SHP-2026-00001/route
 curl http://localhost:28500/shipment/SHP-2026-00001/decisions
 
 # All shipments currently under agent monitoring
-curl http://localhost:28500/shipments/active
+curl http://localhost:28500/shipment/active
 ```
 
 **On Windows (PowerShell)**
@@ -385,7 +385,7 @@ Invoke-RestMethod http://localhost:28500/shipment/SHP-2026-00001/route
 Invoke-RestMethod http://localhost:28500/shipment/SHP-2026-00001/decisions
 
 # All shipments currently under agent monitoring
-Invoke-RestMethod http://localhost:28500/shipments/active
+Invoke-RestMethod http://localhost:28500/shipment/active
 ```
 
 H2 console (browser): `http://localhost:28500/h2-console`  
