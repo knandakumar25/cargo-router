@@ -121,7 +121,9 @@ Every committed routing action is persisted as an immutable `RouteDecision` JPA 
 ### Step-by-Step Message Journey
 
 **1. Kafka Ingestion**  
-A `CargoShipment` JSON packet arrives on the `cargo-updates` topic (partition `kafka-updates-0`). Spring Kafka's `JsonDeserializer` maps it directly to `com.logistics.cargorouter.foundation.CargoShipment` via the `spring.json.value.default.type` consumer property.
+A `CargoShipment` JSON packet arrives on the `cargo-updates` topic (partition `cargo-updates-0`). Spring Kafka's `JsonDeserializer` maps it directly to `com.logistics.cargorouter.foundation.CargoShipment` via the `spring.json.value.default.type` consumer property.
+
+
 
 **2. Validation & Persistence**  
 `ShipmentListener.listen()` performs null/blank guards on `shipmentId`, `originWarehouse`, and `destinationStore`. If the shipment ID already exists in H2 (`ShipmentRepository.existsById()`), the event is dropped for idempotency. Otherwise, `ShipmentAggregator.buildInitialRoute()` executes a depth-first search over the `SEGMENT_INDEX` corridor graph (21 connected freight hubs) to compute the initial multi-hop route. A `ShipmentRecord` is saved to the `shipment_record` table with status `ACTIVE`.
