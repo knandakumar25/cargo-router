@@ -148,7 +148,7 @@ All endpoints are served on port `28500` by `RouteStatusController`.
 |---|---|---|
 | `GET` | `/shipment/{id}/route` | Current route string and status for a given shipment ID |
 | `GET` | `/shipment/{id}/decisions` | Full reroute audit log for a shipment, ordered newest-first |
-| `GET` | `/shipments/active` | All shipments with status `ACTIVE` or `REROUTED` |
+| `GET` | `/shipment/active` | All shipments with status `ACTIVE` or `REROUTED` |
 
 The embedded H2 management console is available at:  
 `http://localhost:28500/h2-console` — JDBC URL: `jdbc:h2:mem:cargorouterdb`, User: `sa`, Password: *(blank)*
@@ -243,17 +243,17 @@ $KAFKA_HOME/bin/kafka-storage.sh format \
 **On Windows (PowerShell)**
 
 ```powershell
-# Set your Kafka installation directory (adjust to your local path)
-$KAFKA_HOME = "C:\kafka\kafka_2.13-4.2.0"
+# Set for this session — skip if KAFKA_HOME is already a permanent user environment variable (see tip above)
+$env:KAFKA_HOME = "C:\kafka\kafka_2.13-4.2.0"
 
-# Generate a fresh cluster UUID
-$CLUSTER_ID = & "$KAFKA_HOME\bin\windows\kafka-storage.bat" random-uuid
+# Generate a fresh cluster UUID — pipe through Select-Object -Last 1 to strip any Java startup warnings
+$CLUSTER_ID = ((& "$env:KAFKA_HOME\bin\windows\kafka-storage.bat" random-uuid 2>&1) | Select-Object -Last 1).Trim()
 Write-Host "Cluster ID: $CLUSTER_ID"
 
 # Format the log directory in standalone KRaft mode
-& "$KAFKA_HOME\bin\windows\kafka-storage.bat" format `
+& "$env:KAFKA_HOME\bin\windows\kafka-storage.bat" format `
     --standalone `
-    --config "$KAFKA_HOME\config\server.properties" `
+    --config "$env:KAFKA_HOME\config\server.properties" `
     --cluster-id $CLUSTER_ID
 ```
 
@@ -272,7 +272,7 @@ $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
 **On Windows (PowerShell)**
 
 ```powershell
-& "$KAFKA_HOME\bin\windows\kafka-server-start.bat" "$KAFKA_HOME\config\server.properties"
+& "$env:KAFKA_HOME\bin\windows\kafka-server-start.bat" "$env:KAFKA_HOME\config\server.properties"
 ```
 
 ---
@@ -284,6 +284,9 @@ Open a second terminal window to provision the data channels before booting the 
 **On macOS / Linux**
 
 ```bash
+# Re-export KAFKA_HOME if this is a new terminal window
+export KAFKA_HOME="${KAFKA_HOME:-/usr/local/kafka}"
+
 $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic cargo-updates --partitions 1 --replication-factor 1
 $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic reroute-commands --partitions 1 --replication-factor 1
 ```
@@ -291,8 +294,11 @@ $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --top
 **On Windows (PowerShell)**
 
 ```powershell
-& "$KAFKA_HOME\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic cargo-updates --partitions 1 --replication-factor 1
-& "$KAFKA_HOME\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic reroute-commands --partitions 1 --replication-factor 1
+# Reload KAFKA_HOME in this new terminal window
+$env:KAFKA_HOME = [System.Environment]::GetEnvironmentVariable("KAFKA_HOME", "User")
+
+& "$env:KAFKA_HOME\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic cargo-updates --partitions 1 --replication-factor 1
+& "$env:KAFKA_HOME\bin\windows\kafka-topics.bat" --bootstrap-server localhost:9092 --create --topic reroute-commands --partitions 1 --replication-factor 1
 ```
 
 ---
@@ -323,7 +329,7 @@ From the root of your `cargo-router` project directory, boot the Spring containe
 .\mvnw spring-boot:run
 ```
 
-The microservice will boot on port **28500**. Verify baseline liveness by curling the active shipments endpoint: `http://localhost:28500/shipments/active`
+The microservice will boot on port **28500**. Verify baseline liveness by curling the active shipments endpoint: `http://localhost:28500/shipment/active`
 
 ---
 
@@ -334,13 +340,19 @@ Open an interactive console producer to feed a simulated logistics event into yo
 **On macOS / Linux**
 
 ```bash
+# Re-export KAFKA_HOME if this is a new terminal window
+export KAFKA_HOME="${KAFKA_HOME:-/usr/local/kafka}"
+
 $KAFKA_HOME/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic cargo-updates
 ```
 
 **On Windows (PowerShell)**
 
 ```powershell
-& "$KAFKA_HOME\bin\windows\kafka-console-producer.bat" --bootstrap-server localhost:9092 --topic cargo-updates
+# Reload KAFKA_HOME in this new terminal window
+$env:KAFKA_HOME = [System.Environment]::GetEnvironmentVariable("KAFKA_HOME", "User")
+
+& "$env:KAFKA_HOME\bin\windows\kafka-console-producer.bat" --bootstrap-server localhost:9092 --topic cargo-updates
 ```
 
 Once the interactive input prompt (`>`) opens, paste this JSON string and press **Enter**:
